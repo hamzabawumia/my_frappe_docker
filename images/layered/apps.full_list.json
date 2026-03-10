@@ -1,0 +1,58 @@
+[
+  {
+    "url": "https://github.com/frappe/erpnext",
+    "branch": "version-15"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/mortuary_app.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/repherod.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/Africa_Home_Care.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/bookma_frappe.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/drug_finder.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/farmlink.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/data_collection_app.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/abifio_frappe.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/country_administrative_divisions.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/Supermed-Ultra.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/custom_payments.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://hamzabawumia:YOUR_NEW_TOKEN@github.com/hamzabawumia/Frappe-healthcare-for-Supermed-Ultra.git",
+    "branch": "main"
+  },
+  {
+    "url": "https://github.com/hamzabawumia/frappe_desk_theme_v15.git",
+    "branch": "main"
+  }
+]
