@@ -5,7 +5,7 @@ version: "3.8"  # Updated to 3.8 for better health check support
 
 services:
   backend:
-    image: frappe/erpnext:v15.67.0
+    image: frappe/erpnext:v15.67.0 # Remember to Updated the image with your custom built image
     networks:
       - frappe_network
     depends_on:
