@@ -2,17 +2,17 @@ version: "3.8"
 
 x-common-image: &common-image
   image: ${CUSTOM_IMAGE}:${CUSTOM_TAG}
-  pull_policy: ${PULL_POLICY:-always}
+  pull_policy: ${PULL_POLICY:-never}
 
 services:
   backend:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       create-site:
         condition: service_completed_successfully
     restart: on-failure
+    networks:
+      - frappe_network
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -25,8 +25,6 @@ services:
 
   configurator:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       db:
         condition: service_healthy
@@ -35,28 +33,24 @@ services:
       redis-queue:
         condition: service_started
     restart: "no"
-    entrypoint: ["bash", "-c"]
-    command: |
-      wait-for-it -t 60 db:3306
-      wait-for-it -t 60 redis-cache:6379
-      wait-for-it -t 60 redis-queue:6379
-
-      echo "Setting up bench configuration..."
-      ls -1 apps > sites/apps.txt
-      bench set-config -g db_host $$DB_HOST
-      bench set-config -gp db_port $$DB_PORT
-      bench set-config -g redis_cache "redis://$$REDIS_CACHE"
-      bench set-config -g redis_queue "redis://$$REDIS_QUEUE"
-      bench set-config -g redis_socketio "redis://$$REDIS_QUEUE"
-      bench set-config -gp socketio_port $$SOCKETIO_PORT
-
+    networks:
+      - frappe_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      set -e &&
+      wait-for-it db:3306 -t 60 &&
+      wait-for-it redis-cache:6379 -t 60 &&
+      wait-for-it redis-queue:6379 -t 60 &&
+      echo "Setting up bench configuration..." &&
+      ls -1 apps > sites/apps.txt &&
+      bench set-config -g db_host db &&
+      bench set-config -gp db_port 3306 &&
+      bench set-config -g redis_cache "redis://redis-cache:6379" &&
+      bench set-config -g redis_queue "redis://redis-queue:6379" &&
+      bench set-config -g redis_socketio "redis://redis-queue:6379" &&
+      bench set-config -gp socketio_port 9000 &&
+      echo "Final config:" &&
       cat sites/common_site_config.json
-    environment:
-      DB_HOST: db
-      DB_PORT: "3306"
-      REDIS_CACHE: redis-cache:6379
-      REDIS_QUEUE: redis-queue:6379
-      SOCKETIO_PORT: "9000"
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
@@ -64,35 +58,38 @@ services:
 
   create-site:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       configurator:
         condition: service_completed_successfully
     restart: "no"
-    entrypoint: ["bash", "-c"]
-    command: |
-      wait-for-it -t 120 db:3306
-      wait-for-it -t 120 redis-cache:6379
-      wait-for-it -t 120 redis-queue:6379
-
+    networks:
+      - frappe_network
+    entrypoint: ["/bin/bash", "-c"]
+    command: >
+      set -e &&
+      wait-for-it db:3306 -t 120 &&
+      wait-for-it redis-cache:6379 -t 120 &&
+      wait-for-it redis-queue:6379 -t 120 &&
       if [ ! -f sites/common_site_config.json ]; then
-        echo "ERROR: common_site_config.json not found!"
-        exit 1
+        echo "ERROR: common_site_config.json not found!" && exit 1;
+      fi &&
+      if [ ! -d sites/frontend ]; then
+        echo "Creating site: frontend" &&
+        bench new-site frontend \
+          --mariadb-user-host-login-scope='%' \
+          --admin-password=${FRAPPE_ADMIN_PASSWORD:-admin} \
+          --db-root-username=root \
+          --db-root-password=${DB_PASSWORD} \
+          --set-default;
+      else
+        echo "Site already exists, skipping creation";
       fi
-
-      bench new-site frontend \
-        --mariadb-user-host-login-scope='%' \
-        --admin-password=${FRAPPE_ADMIN_PASSWORD:-admin} \
-        --db-root-username=root \
-        --db-root-password=${DB_PASSWORD} \
-        --set-default
 
   db:
     image: mariadb:10.6
+    restart: on-failure
     networks:
       - frappe_network
-    restart: on-failure
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
@@ -112,36 +109,36 @@ services:
 
   frontend:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       backend:
         condition: service_started
       websocket:
         condition: service_started
     restart: on-failure
+    networks:
+      - frappe_network
     command: ["nginx-entrypoint.sh"]
     environment:
       BACKEND: backend:8000
       FRAPPE_SITE_NAME_HEADER: frontend
       SOCKETIO: websocket:9000
+    ports:
+      - "0.0.0.0:8090:8080"
+      - "0.0.0.0:8092:8092"
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
       - apps:/home/frappe/frappe-bench/apps
       - ./frappe_multi.conf:/etc/nginx/conf.d/frappe_multi.conf
-    ports:
-      - "0.0.0.0:8090:8080"
-      - "0.0.0.0:8092:8092"
 
   queue-long:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       backend:
         condition: service_started
     restart: on-failure
+    networks:
+      - frappe_network
     command: ["bench", "worker", "--queue", "long,default,short"]
     volumes:
       - sites:/home/frappe/frappe-bench/sites
@@ -150,12 +147,12 @@ services:
 
   queue-short:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       backend:
         condition: service_started
     restart: on-failure
+    networks:
+      - frappe_network
     command: ["bench", "worker", "--queue", "short,default"]
     volumes:
       - sites:/home/frappe/frappe-bench/sites
@@ -164,26 +161,26 @@ services:
 
   redis-queue:
     image: redis:6.2-alpine
+    restart: on-failure
     networks:
       - frappe_network
-    restart: on-failure
     volumes:
       - redis-queue-data:/data
 
   redis-cache:
     image: redis:6.2-alpine
+    restart: on-failure
     networks:
       - frappe_network
-    restart: on-failure
 
   scheduler:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       backend:
         condition: service_started
     restart: on-failure
+    networks:
+      - frappe_network
     command: ["bench", "schedule"]
     volumes:
       - sites:/home/frappe/frappe-bench/sites
@@ -192,12 +189,12 @@ services:
 
   websocket:
     <<: *common-image
-    networks:
-      - frappe_network
     depends_on:
       backend:
         condition: service_started
     restart: on-failure
+    networks:
+      - frappe_network
     command: ["node", "/home/frappe/frappe-bench/apps/frappe/socketio.js"]
     volumes:
       - sites:/home/frappe/frappe-bench/sites
