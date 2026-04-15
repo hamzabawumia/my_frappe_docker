@@ -65,7 +65,6 @@ services:
       - frappe_network
     entrypoint: ["/bin/bash", "-c"]
     command: >
-      set -e &&
       wait-for-it db:3306 -t 120 &&
       wait-for-it redis-cache:6379 -t 120 &&
       wait-for-it redis-queue:6379 -t 120 &&
