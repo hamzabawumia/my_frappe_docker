@@ -51,6 +51,10 @@
     "url": "https://hamzabawumia:GITHUB_TOKEN@github.com/hamzabawumia/Frappe-healthcare-for-Supermed-Ultra.git",
     "branch": "main"
   },
+    {
+    "url": "https://github.com/hamzabawumia/desk_login_redirect.git",
+    "branch": "main"
+  },
   {
     "url": "https://github.com/hamzabawumia/frappe_desk_theme_v15.git",
     "branch": "main"
